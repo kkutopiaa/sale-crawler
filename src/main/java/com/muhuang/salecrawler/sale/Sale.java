@@ -23,6 +23,8 @@ public class Sale extends BaseEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date saleDate;
 
+    private int incrementalSellCount;
+
     private int number;
 
     @NotNull
