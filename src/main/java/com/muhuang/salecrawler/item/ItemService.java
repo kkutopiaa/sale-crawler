@@ -1,5 +1,8 @@
 package com.muhuang.salecrawler.item;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.muhuang.salecrawler.sale.Sale;
 import com.muhuang.salecrawler.sale.SaleRepository;
 import com.muhuang.salecrawler.sale.SaleService;
@@ -123,4 +126,23 @@ public class ItemService {
                 .orElse(Sale.builder().number(0).build());
     }
 
+
+    @Resource
+    OneBoundService oneBoundService;
+
+    public Integer getSellCount(String itemId) {
+        String json = oneBoundService.getTaoBaoDetail(itemId);
+        return parseSellCount(json);
+    }
+
+    private static int parseSellCount(String json) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(json);
+            JsonNode apiStack = jsonNode.get("item").get("apiStack");
+            return apiStack.get(0).get("value").get("item").get("vagueSellCount").asInt();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

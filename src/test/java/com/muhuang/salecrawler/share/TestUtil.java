@@ -6,7 +6,13 @@ import com.muhuang.salecrawler.item.PluginItemDTO;
 import com.muhuang.salecrawler.shop.Shop;
 import com.muhuang.salecrawler.user.User;
 import lombok.SneakyThrows;
+import org.springframework.core.io.ClassPathResource;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.List;
@@ -58,5 +64,14 @@ public class TestUtil {
 
      public static Shop createValidShop() {
         return Shop.builder().outShopId("38888273").shopName("SKY").shopUrl("https://sky.taobao.com").build();
+    }
+
+    public static String readJsonFromResource(String fileName) {
+        try {
+            ClassPathResource classPathResource = new ClassPathResource(fileName);
+            return Files.readString(Paths.get(classPathResource.getURI()), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

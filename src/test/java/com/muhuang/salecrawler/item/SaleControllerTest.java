@@ -6,10 +6,7 @@ import com.muhuang.salecrawler.sale.Sale;
 import com.muhuang.salecrawler.sale.SaleRepository;
 import com.muhuang.salecrawler.shop.ShopRepository;
 import jakarta.annotation.Resource;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
@@ -43,7 +40,7 @@ public class SaleControllerTest {
     @Resource
     private ShopRepository shopRepository;
 
-    @AfterEach
+    @BeforeEach
     public void cleanup() {
         saleRepository.deleteAll();
         itemRepository.deleteAll();

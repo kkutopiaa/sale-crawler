@@ -11,7 +11,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Date;
 
@@ -27,6 +26,8 @@ public class ItemSellCountTest {
     class SingleRealTimeFetch {
 
         private final String itemId = "32838242344";
+        private final String mockJson = TestUtil.readJsonFromResource("taobao_detail_response.json");
+
         @MockBean
         OneBoundService oneBoundService;
 
@@ -43,26 +44,25 @@ public class ItemSellCountTest {
         void setup() {
             saleRepository.deleteAll();
             itemRepository.deleteAll();
-            Mockito.when(oneBoundService.getTaoBaoDetail(itemId)).thenReturn(16);
+            Mockito.when(oneBoundService.getTaoBaoDetail(itemId)).thenReturn(mockJson);
         }
 
         @Test
-        @Disabled
         public void toFetchItemDetail_callItemDetailApi_receiveDetailJson() {
-            String itemId = "1234";
-            Integer sellCount = oneBoundService.getTaoBaoDetail(itemId);
-
+            String json = oneBoundService.getTaoBaoDetail(itemId);
+            assertThat(json).isEqualTo(mockJson);
         }
 
         @Test
         public void toFetchItemDetail_callItemDetailApiAndParseSellCount_receiveSellCountField() {
-            Integer sellCount = oneBoundService.getTaoBaoDetail(itemId);
+            Integer sellCount = itemService.getSellCount(itemId);
+
             assertThat(sellCount).isEqualTo(16);
         }
 
         @Test
         public void toFetchItemDetail_callItemDetailApiAndParseSellCount_saveSellCountToDatabase() {
-            Integer sellCount = oneBoundService.getTaoBaoDetail(itemId);
+            Integer sellCount = itemService.getSellCount(itemId);
             saleRepository.save(Sale.builder().number(sellCount).build());
 
             assertThat(saleRepository.count()).isEqualTo(1);
@@ -71,7 +71,7 @@ public class ItemSellCountTest {
         @Test
         public void saveSellCount_itemIsValid_sellCountIsAssociatedItem() {
             itemRepository.save(TestUtil.createValidItem());
-            Integer sellCount = oneBoundService.getTaoBaoDetail(itemId);
+            Integer sellCount = itemService.getSellCount(itemId);
             Sale sale = itemService.saveSellCount(itemId, sellCount);
 
             assertThat(sale.getItem().getOutItemId()).isEqualTo(itemId);
@@ -80,17 +80,18 @@ public class ItemSellCountTest {
         @Test
         public void saveSellCount_itemIsValid_saleDateIsYesterday() {
             itemRepository.save(TestUtil.createValidItem());
-            Integer sellCount = oneBoundService.getTaoBaoDetail(itemId);
+            Integer sellCount = itemService.getSellCount(itemId);
             Sale sale = itemService.saveSellCount(itemId, sellCount);
-            Date yesterday = Date.from(LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
-
+            Date yesterday = Date.from(
+                    LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+            
             assertThat(sale.getSaleDate()).isEqualTo(yesterday);
         }
 
         @Test
         public void saveSellCount_itemIsValidAndSaleDateIsFirstDay_incrementalSellCountIsEqualToSellCount() {
             itemRepository.save(TestUtil.createValidItem());
-            Integer sellCount = oneBoundService.getTaoBaoDetail(itemId);
+            Integer sellCount = itemService.getSellCount(itemId);
             Sale sale = itemService.saveSellCount(itemId, sellCount);
 
             assertThat(sale.getIncrementalSellCount()).isEqualTo(sale.getNumber());
@@ -99,10 +100,11 @@ public class ItemSellCountTest {
         @Test
         public void saveSellCount_itemIsValidAndSaleDateIsNotFirstDay_saveIncrementalSellCountToDatabase() {
             itemRepository.save(TestUtil.createValidItem());
-            Date dayBeforeYesterday = Date.from(LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC));
+            Date dayBeforeYesterday = Date.from(
+                    LocalDate.now().minusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC));
             itemService.saveSellCount(itemId, 10, dayBeforeYesterday);
 
-            Integer sellCount = oneBoundService.getTaoBaoDetail(itemId);
+            Integer sellCount = itemService.getSellCount(itemId);
             Sale sale = itemService.saveSellCount(itemId, sellCount);
 
             assertThat(sale.getIncrementalSellCount()).isEqualTo(6);
